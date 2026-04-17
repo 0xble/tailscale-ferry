@@ -11,6 +11,13 @@ tokens.
 
 ![Markdown article rendered with frontmatter, tags, and metadata](docs/screenshots/hero-markdown.png)
 
+## Previews
+
+| | |
+|---|---|
+| [![Code preview with syntax highlighting](docs/screenshots/preview-code.png)](docs/screenshots/preview-code.png) | [![CSV rendered as a sortable table](docs/screenshots/preview-csv.png)](docs/screenshots/preview-csv.png) |
+| [![PDF rendered with pdf.js](docs/screenshots/preview-pdf.png)](docs/screenshots/preview-pdf.png) | [![Directory listing with breadcrumbs](docs/screenshots/preview-directory.png)](docs/screenshots/preview-directory.png) |
+
 ## Use it to
 
 - Share a draft markdown with your team. It opens as a polished article,
@@ -28,13 +35,6 @@ tokens.
 - Directory listing with breadcrumb navigation
 - Automatic share expiry and garbage collection
 - Snapshot mode for point-in-time copies
-
-## Previews
-
-| | |
-|---|---|
-| [![Code preview with syntax highlighting](docs/screenshots/preview-code.png)](docs/screenshots/preview-code.png) | [![CSV rendered as a sortable table](docs/screenshots/preview-csv.png)](docs/screenshots/preview-csv.png) |
-| [![PDF rendered with pdf.js](docs/screenshots/preview-pdf.png)](docs/screenshots/preview-pdf.png) | [![Directory listing with breadcrumbs](docs/screenshots/preview-directory.png)](docs/screenshots/preview-directory.png) |
 
 ## Usage
 
