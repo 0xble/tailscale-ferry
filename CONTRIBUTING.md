@@ -36,7 +36,7 @@ git config --local core.hooksPath git-hooks
 
 ## Reporting bugs
 
-Open an issue at https://github.com/0xble/ferry/issues with:
+Open an issue at https://github.com/0xble/tailscale-ferry/issues with:
 
 - What you expected vs what happened
 - Steps to reproduce

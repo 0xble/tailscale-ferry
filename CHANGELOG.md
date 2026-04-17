@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Generated release notes for tagged versions are also published on the
-[GitHub Releases](https://github.com/0xble/ferry/releases) page.
+[GitHub Releases](https://github.com/0xble/tailscale-ferry/releases) page.
 
 ## [Unreleased]
 
@@ -46,5 +46,5 @@ Initial public release.
 - Admin API listens on loopback only (`127.0.0.1:39125`); public listener binds
   to the tailnet interface.
 
-[Unreleased]: https://github.com/0xble/ferry/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/0xble/ferry/releases/tag/v1.0.0
+[Unreleased]: https://github.com/0xble/tailscale-ferry/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/0xble/tailscale-ferry/releases/tag/v1.0.0
