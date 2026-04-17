@@ -483,9 +483,9 @@ fetch("%s").then(async response=>{
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
 <title>%s</title>
-<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/lib/common.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github.min.css" media="(prefers-color-scheme: light)" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark.min.css" media="(prefers-color-scheme: dark)" />
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/github.min.css" media="(prefers-color-scheme: light)" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/github-dark.min.css" media="(prefers-color-scheme: dark)" />
 <style>`+previewThemeCSS+previewBaseCSS+`
 pre{margin:0;padding:16px;overflow:auto}
 code{font-size:13px;line-height:1.45;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace}
