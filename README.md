@@ -1,4 +1,4 @@
-# ferry
+# tailscale-ferry
 
 [![CI](https://github.com/0xble/tailscale-ferry/actions/workflows/ci.yml/badge.svg)](https://github.com/0xble/tailscale-ferry/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/0xble/tailscale-ferry?include_prereleases&sort=semver)](https://github.com/0xble/tailscale-ferry/releases)
