@@ -38,6 +38,21 @@ tokens.
 
 ## Usage
 
+`ferry publish` returns a tailnet URL that renders the file as a
+polished preview in any browser:
+
+```
+$ ferry publish ~/Desktop/q3-roadmap.md
+id: y4bLVYZQvSE
+kind: file
+mode: live
+created: 2026-04-17T19:07:42-04:00
+expires: 2026-04-24T19:07:42-04:00
+url: https://laptop.tail-abc123.ts.net/s/y4bLVYZQvSE?t=veyZiAynxtU
+```
+
+Other commands:
+
 ```sh
 # Publish a file (starts daemon automatically)
 ferry publish ~/Desktop/report.pdf
