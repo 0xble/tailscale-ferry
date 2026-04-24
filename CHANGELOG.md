@@ -10,6 +10,13 @@ Generated release notes for tagged versions are also published on the
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-04-24
+
+### Added
+
+- Preview common template files, including chezmoi-style Markdown templates
+  such as `.md.tmpl`, and use the underlying extension for code highlighting.
+
 ## [1.0.0]
 
 Initial public release.
@@ -46,5 +53,6 @@ Initial public release.
 - Admin API listens on loopback only (`127.0.0.1:39125`); public listener binds
   to the tailnet interface.
 
-[Unreleased]: https://github.com/0xble/tailscale-ferry/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/0xble/tailscale-ferry/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/0xble/tailscale-ferry/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/0xble/tailscale-ferry/releases/tag/v1.0.0
