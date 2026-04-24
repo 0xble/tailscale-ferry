@@ -97,12 +97,68 @@ func canCopyContents(kind PreviewKind) bool {
 	}
 }
 
+var markdownPreviewExtensions = []string{".markdown", ".mdown", ".mkdn", ".mkd", ".md"}
+
+var previewTemplateSuffixes = []string{
+	".handlebars",
+	".mustache",
+	".jinja2",
+	".jinja",
+	".gotmpl",
+	".ctmpl",
+	".tmpl",
+	".hbs",
+	".erb",
+	".tpl",
+	".j2",
+}
+
+func previewNameForExtension(name string) (string, bool) {
+	stripped := false
+	for {
+		lowerName := strings.ToLower(name)
+		matched := false
+		for _, suffix := range previewTemplateSuffixes {
+			if strings.HasSuffix(lowerName, suffix) && len(name) > len(suffix) {
+				name = name[:len(name)-len(suffix)]
+				stripped = true
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return name, stripped
+		}
+	}
+}
+
+// IsMarkdownPreviewName reports whether a filename should use the rendered
+// Markdown preview, including common template suffixes such as .md.tmpl.
+func IsMarkdownPreviewName(name string) bool {
+	previewName, _ := previewNameForExtension(name)
+	ext := strings.ToLower(filepath.Ext(previewName))
+	for _, markdownExt := range markdownPreviewExtensions {
+		if ext == markdownExt {
+			return true
+		}
+	}
+	return false
+}
+
 func ClassifyPreviewKind(name string) PreviewKind {
-	ext := strings.ToLower(filepath.Ext(name))
+	previewName, isTemplate := previewNameForExtension(name)
+	if isTemplate {
+		if IsMarkdownPreviewName(name) {
+			return PreviewMarkdown
+		}
+		return PreviewCode
+	}
+
+	ext := strings.ToLower(filepath.Ext(previewName))
 	switch ext {
 	case ".diff", ".patch":
 		return PreviewDiff
-	case ".md", ".markdown":
+	case ".md", ".markdown", ".mdown", ".mkdn", ".mkd":
 		return PreviewMarkdown
 	case ".html", ".htm":
 		return PreviewHTML
@@ -124,7 +180,8 @@ func ClassifyPreviewKind(name string) PreviewKind {
 }
 
 func CodeLanguageForName(name string) string {
-	ext := strings.ToLower(filepath.Ext(name))
+	previewName, _ := previewNameForExtension(name)
+	ext := strings.ToLower(filepath.Ext(previewName))
 	switch ext {
 	case ".js", ".jsx", ".mjs", ".cjs":
 		return "javascript"
@@ -138,6 +195,10 @@ func CodeLanguageForName(name string) string {
 		return "go"
 	case ".py":
 		return "python"
+	case ".rb":
+		return "ruby"
+	case ".rs":
+		return "rust"
 	case ".java":
 		return "java"
 	case ".php":
@@ -146,7 +207,25 @@ func CodeLanguageForName(name string) string {
 		return "xml"
 	case ".yaml", ".yml":
 		return "yaml"
-	case ".md", ".markdown":
+	case ".toml":
+		return "toml"
+	case ".ini", ".env":
+		return "ini"
+	case ".sh", ".bash", ".zsh", ".fish":
+		return "shell"
+	case ".sql":
+		return "sql"
+	case ".swift":
+		return "swift"
+	case ".kt", ".kts":
+		return "kotlin"
+	case ".cs":
+		return "csharp"
+	case ".c", ".h":
+		return "c"
+	case ".cc", ".cpp", ".cxx", ".hpp":
+		return "cpp"
+	case ".md", ".markdown", ".mdown", ".mkdn", ".mkd":
 		return "markdown"
 	default:
 		return "plaintext"

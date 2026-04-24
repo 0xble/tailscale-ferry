@@ -100,6 +100,69 @@ func TestClassifyPreviewKindTreatsDiffsAsStructuredDiffs(t *testing.T) {
 	}
 }
 
+func TestClassifyPreviewKindSupportsTemplateSuffixes(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]PreviewKind{
+		"SKILL.md.tmpl":       PreviewMarkdown,
+		"README.markdown.tpl": PreviewMarkdown,
+		"config.yaml.tmpl":    PreviewCode,
+		"settings.json.j2":    PreviewCode,
+		"template.tmpl":       PreviewCode,
+		"index.html.tmpl":     PreviewCode,
+	}
+	for name, want := range cases {
+		if got := ClassifyPreviewKind(name); got != want {
+			t.Fatalf("ClassifyPreviewKind(%q) = %q, want %q", name, got, want)
+		}
+	}
+}
+
+func TestCodeLanguageForNameUsesUnderlyingTemplateExtension(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]string{
+		"config.yaml.tmpl": "yaml",
+		"settings.json.j2": "json",
+		"install.sh.tmpl":  "shell",
+		"template.tmpl":    "plaintext",
+	}
+	for name, want := range cases {
+		if got := CodeLanguageForName(name); got != want {
+			t.Fatalf("CodeLanguageForName(%q) = %q, want %q", name, got, want)
+		}
+	}
+}
+
+func TestIsMarkdownPreviewNameSupportsTemplateSuffixes(t *testing.T) {
+	t.Parallel()
+
+	for _, name := range []string{"SKILL.md.tmpl", "README.markdown.tpl", "notes.mkd.jinja2"} {
+		if !IsMarkdownPreviewName(name) {
+			t.Fatalf("expected %q to be treated as markdown", name)
+		}
+	}
+	if IsMarkdownPreviewName("config.yaml.tmpl") {
+		t.Fatal("expected yaml template not to be treated as markdown")
+	}
+}
+
+func TestRenderPreviewPageCodeTemplateShowsCopyAction(t *testing.T) {
+	t.Parallel()
+
+	html := RenderPreviewPage("config.yaml.tmpl", PreviewCode, "/r/share123/config.yaml.tmpl?t=token123", nil)
+
+	if strings.Contains(html, `This file type does not have an in-browser preview.`) {
+		t.Fatalf("expected template file to render code preview, got %q", html)
+	}
+	if !strings.Contains(html, `class="language-yaml"`) {
+		t.Fatalf("expected underlying yaml language for template preview, got %q", html)
+	}
+	if !strings.Contains(html, `class="action action-copy"`) {
+		t.Fatalf("expected copy action in template preview, got %q", html)
+	}
+}
+
 func TestRenderPreviewPageDiffUsesDiff2Html(t *testing.T) {
 	t.Parallel()
 

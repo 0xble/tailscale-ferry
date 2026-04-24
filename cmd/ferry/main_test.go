@@ -99,6 +99,30 @@ func TestResolvePublishPlanUsesDirectoryBundleForMarkdownWithLocalAssets(t *test
 	}
 }
 
+func TestResolvePublishPlanUsesDirectoryBundleForMarkdownTemplateWithLocalAssets(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	docPath := filepath.Join(root, "plan.md.tmpl")
+	if err := os.WriteFile(docPath, []byte(`# Hello
+
+![Diagram](./img/diagram.png)
+`), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	plan, err := resolvePublishPlan(docPath)
+	if err != nil {
+		t.Fatalf("resolvePublishPlan: %v", err)
+	}
+	if plan.SharePath != root {
+		t.Fatalf("expected share root %q, got %q", root, plan.SharePath)
+	}
+	if plan.EntryRel != "plan.md.tmpl" {
+		t.Fatalf("expected entry rel plan.md.tmpl, got %q", plan.EntryRel)
+	}
+}
+
 func TestResolvePublishPlanRejectsEscapingMarkdownAssets(t *testing.T) {
 	t.Parallel()
 

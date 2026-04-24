@@ -324,12 +324,7 @@ func resolvePublishPlan(absPath string) (publishPlan, error) {
 }
 
 func isMarkdownPath(target string) bool {
-	switch strings.ToLower(filepath.Ext(target)) {
-	case ".md", ".markdown":
-		return true
-	default:
-		return false
-	}
+	return share.IsMarkdownPreviewName(filepath.Base(target))
 }
 
 func resolvePublishURL(baseURL string, entryRel string) (string, error) {

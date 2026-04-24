@@ -104,9 +104,10 @@ func buildMarkdownPreviewSections(
 
 func trimMarkdownPreviewTitle(title string) string {
 	title = strings.TrimSpace(title)
-	for _, suffix := range []string{".markdown", ".mdown", ".mkdn", ".mkd", ".md"} {
-		if strings.HasSuffix(strings.ToLower(title), suffix) {
-			return strings.TrimSpace(title[:len(title)-len(suffix)])
+	previewTitle, _ := previewNameForExtension(title)
+	for _, suffix := range markdownPreviewExtensions {
+		if strings.HasSuffix(strings.ToLower(previewTitle), suffix) {
+			return strings.TrimSpace(previewTitle[:len(previewTitle)-len(suffix)])
 		}
 	}
 	return title
