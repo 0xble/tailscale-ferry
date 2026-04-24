@@ -136,7 +136,11 @@ func previewNameForExtension(name string) (string, bool) {
 // Markdown preview, including common template suffixes such as .md.tmpl.
 func IsMarkdownPreviewName(name string) bool {
 	previewName, _ := previewNameForExtension(name)
-	ext := strings.ToLower(filepath.Ext(previewName))
+	return isMarkdownPreviewExtension(filepath.Ext(previewName))
+}
+
+func isMarkdownPreviewExtension(ext string) bool {
+	ext = strings.ToLower(ext)
 	for _, markdownExt := range markdownPreviewExtensions {
 		if ext == markdownExt {
 			return true
@@ -147,19 +151,22 @@ func IsMarkdownPreviewName(name string) bool {
 
 func ClassifyPreviewKind(name string) PreviewKind {
 	previewName, isTemplate := previewNameForExtension(name)
+	ext := strings.ToLower(filepath.Ext(previewName))
 	if isTemplate {
-		if IsMarkdownPreviewName(name) {
+		if isMarkdownPreviewExtension(ext) {
 			return PreviewMarkdown
 		}
 		return PreviewCode
 	}
 
-	ext := strings.ToLower(filepath.Ext(previewName))
 	switch ext {
 	case ".diff", ".patch":
 		return PreviewDiff
-	case ".md", ".markdown", ".mdown", ".mkdn", ".mkd":
+	}
+	if isMarkdownPreviewExtension(ext) {
 		return PreviewMarkdown
+	}
+	switch ext {
 	case ".html", ".htm":
 		return PreviewHTML
 	case ".csv", ".tsv":
@@ -182,6 +189,9 @@ func ClassifyPreviewKind(name string) PreviewKind {
 func CodeLanguageForName(name string) string {
 	previewName, _ := previewNameForExtension(name)
 	ext := strings.ToLower(filepath.Ext(previewName))
+	if isMarkdownPreviewExtension(ext) {
+		return "markdown"
+	}
 	switch ext {
 	case ".js", ".jsx", ".mjs", ".cjs":
 		return "javascript"
@@ -225,8 +235,6 @@ func CodeLanguageForName(name string) string {
 		return "c"
 	case ".cc", ".cpp", ".cxx", ".hpp":
 		return "cpp"
-	case ".md", ".markdown", ".mdown", ".mkdn", ".mkd":
-		return "markdown"
 	default:
 		return "plaintext"
 	}
