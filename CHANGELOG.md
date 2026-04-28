@@ -10,6 +10,20 @@ Generated release notes for tagged versions are also published on the
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-04-28
+
+### Added
+
+- Inline SVG blocks in markdown previews now render. The sanitization policy
+  allows the safe subset of SVG elements and attributes; `<script>`,
+  `<foreignObject>`, and `on*` handlers remain stripped.
+- Video and audio embedded in markdown previews now play inline. Markdown
+  image syntax pointing at a media file (e.g. `![demo](demo.mp4)`,
+  `![track](song.mp3)`) is converted to a `<video>` or `<audio>` element with
+  controls, and hand-authored `<video>`/`<audio>`/`<source>`/`<track>` tags
+  survive sanitization. Share-aware URL rewriting now covers media `src`
+  attributes alongside `<img>` sources.
+
 ## [1.1.0] - 2026-04-24
 
 ### Added
@@ -53,6 +67,7 @@ Initial public release.
 - Admin API listens on loopback only (`127.0.0.1:39125`); public listener binds
   to the tailnet interface.
 
-[Unreleased]: https://github.com/0xble/tailscale-ferry/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/0xble/tailscale-ferry/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/0xble/tailscale-ferry/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/0xble/tailscale-ferry/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/0xble/tailscale-ferry/releases/tag/v1.0.0
