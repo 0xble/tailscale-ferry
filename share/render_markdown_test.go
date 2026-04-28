@@ -41,6 +41,34 @@ func TestRenderMarkdownDocumentSupportsGFMAndSanitizes(t *testing.T) {
 	}
 }
 
+func TestRenderMarkdownDocumentPreservesInlineSVG(t *testing.T) {
+	t.Parallel()
+
+	rendered, _, err := RenderMarkdownDocument([]byte(`# Diagram
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200" height="100">
+  <circle cx="100" cy="50" r="40" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+  <text x="100" y="55" font-family="sans-serif" font-size="16" text-anchor="middle">Hello</text>
+  <script>alert("xss")</script>
+  <foreignObject><iframe src="https://evil"></iframe></foreignObject>
+</svg>
+`))
+	if err != nil {
+		t.Fatalf("RenderMarkdownDocument: %v", err)
+	}
+
+	for _, want := range []string{"<svg", "<circle", "<text", `viewBox="0 0 200 100"`, `cx="100"`} {
+		if !strings.Contains(rendered, want) {
+			t.Fatalf("expected %q in rendered output, got %q", want, rendered)
+		}
+	}
+	for _, banned := range []string{"<script", "<foreignObject", "<iframe", `alert("xss")`} {
+		if strings.Contains(rendered, banned) {
+			t.Fatalf("expected %q to be stripped from rendered output, got %q", banned, rendered)
+		}
+	}
+}
+
 func TestRenderMarkdownDocumentPreservesDirectiveTagsAndNestedMarkdown(t *testing.T) {
 	t.Parallel()
 

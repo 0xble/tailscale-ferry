@@ -238,7 +238,42 @@ func markdownPolicy() *bluemonday.Policy {
 	p.RequireNoFollowOnLinks(true)
 	p.RequireNoReferrerOnLinks(true)
 	p.AddTargetBlankToFullyQualifiedLinks(true)
+	allowInlineSVG(p)
 	return p
+}
+
+var inlineSVGElements = []string{
+	"svg", "g", "defs", "symbol", "use", "title", "desc",
+	"path", "rect", "circle", "ellipse", "line", "polyline", "polygon",
+	"text", "tspan",
+	"linearGradient", "radialGradient", "stop",
+	"marker", "mask", "clipPath", "pattern",
+}
+
+// allowInlineSVG extends p with the safe subset of SVG needed to render
+// hand-authored diagrams embedded in markdown. Scripting surfaces
+// (<script>, <foreignObject>, on* handlers) are intentionally omitted.
+func allowInlineSVG(p *bluemonday.Policy) {
+	p.AllowElements(inlineSVGElements...)
+
+	p.AllowAttrs(
+		"xmlns", "viewBox", "preserveAspectRatio",
+		"width", "height",
+		"x", "y", "x1", "y1", "x2", "y2",
+		"cx", "cy", "r", "rx", "ry",
+		"d", "points", "transform",
+		"fill", "fill-rule", "fill-opacity", "clip-rule",
+		"stroke", "stroke-width", "stroke-linecap", "stroke-linejoin",
+		"stroke-dasharray", "stroke-dashoffset", "stroke-miterlimit", "stroke-opacity",
+		"opacity", "id", "class", "role", "aria-label",
+		"font-family", "font-size", "font-weight", "text-anchor",
+		"dominant-baseline", "letter-spacing",
+		"offset", "stop-color", "stop-opacity",
+		"gradientUnits", "gradientTransform", "spreadMethod",
+		"markerWidth", "markerHeight", "markerUnits", "refX", "refY", "orient",
+		"patternUnits", "patternTransform", "maskUnits", "maskContentUnits",
+		"clipPathUnits",
+	).OnElements(inlineSVGElements...)
 }
 
 func decorateMarkdownHTML(rendered string) (string, error) {
