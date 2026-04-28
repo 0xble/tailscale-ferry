@@ -183,7 +183,7 @@ func RewriteMarkdownLinks(rendered string, currentRel string, resolver markdownL
 		}
 	})
 
-	doc.Find("img[src]").Each(func(_ int, sel *goquery.Selection) {
+	doc.Find(markdownMediaSrcSelector).Each(func(_ int, sel *goquery.Selection) {
 		src, ok := sel.Attr("src")
 		if !ok {
 			return
@@ -200,6 +200,8 @@ func RewriteMarkdownLinks(rendered string, currentRel string, resolver markdownL
 	return html, nil
 }
 
+const markdownMediaSrcSelector = "img[src], video[src], audio[src], source[src], track[src]"
+
 func RewriteServePreviewImageSources(rendered string, externalBase string) (string, error) {
 	if rendered == "" {
 		return rendered, nil
@@ -212,7 +214,7 @@ func RewriteServePreviewImageSources(rendered string, externalBase string) (stri
 		return "", fmt.Errorf("parse markdown images: %w", err)
 	}
 
-	doc.Find("img[src]").Each(func(_ int, sel *goquery.Selection) {
+	doc.Find(markdownMediaSrcSelector).Each(func(_ int, sel *goquery.Selection) {
 		src, ok := sel.Attr("src")
 		if !ok {
 			return
@@ -239,7 +241,24 @@ func markdownPolicy() *bluemonday.Policy {
 	p.RequireNoReferrerOnLinks(true)
 	p.AddTargetBlankToFullyQualifiedLinks(true)
 	allowInlineSVG(p)
+	allowInlineMedia(p)
 	return p
+}
+
+// allowInlineMedia extends p with the safe subset of HTML media elements so
+// hand-authored <video>/<audio> blocks survive sanitization. URL schemes for
+// src/poster are still constrained by UGCPolicy's AllowStandardURLs.
+func allowInlineMedia(p *bluemonday.Policy) {
+	p.AllowElements("video", "audio", "source", "track")
+
+	p.AllowAttrs(
+		"src", "controls", "preload", "muted", "loop",
+		"autoplay", "playsinline", "controlslist", "crossorigin",
+	).OnElements("video", "audio")
+	p.AllowAttrs("width", "height", "poster").OnElements("video")
+
+	p.AllowAttrs("src", "type", "media").OnElements("source")
+	p.AllowAttrs("src", "kind", "srclang", "label", "default").OnElements("track")
 }
 
 var inlineSVGElements = []string{
@@ -294,6 +313,19 @@ func decorateMarkdownHTML(rendered string) (string, error) {
 		sel.PrependHtml(anchor)
 	})
 
+	doc.Find("img[src]").Each(func(_ int, sel *goquery.Selection) {
+		src, ok := sel.Attr("src")
+		if !ok {
+			return
+		}
+		switch mediaKindForSrc(src) {
+		case PreviewVideo:
+			sel.ReplaceWithHtml(buildMediaElementHTML("video", src))
+		case PreviewAudio:
+			sel.ReplaceWithHtml(buildMediaElementHTML("audio", src))
+		}
+	})
+
 	doc.Find("pre").Each(func(_ int, sel *goquery.Selection) {
 		decorateMarkdownCopyBlock(sel, "code", "Copy code block")
 	})
@@ -309,6 +341,24 @@ func decorateMarkdownHTML(rendered string) (string, error) {
 		return "", err
 	}
 	return html, nil
+}
+
+func mediaKindForSrc(src string) PreviewKind {
+	s := strings.TrimSpace(src)
+	if s == "" {
+		return PreviewBinary
+	}
+	if u, err := url.Parse(s); err == nil && u.Path != "" {
+		return ClassifyPreviewKind(path.Base(u.Path))
+	}
+	return ClassifyPreviewKind(path.Base(s))
+}
+
+func buildMediaElementHTML(tag string, src string) string {
+	return fmt.Sprintf(
+		`<%s src="%s" controls preload="metadata"></%s>`,
+		tag, html.EscapeString(src), tag,
+	)
 }
 
 func decorateMarkdownCopyBlock(sel *goquery.Selection, kind string, label string) {

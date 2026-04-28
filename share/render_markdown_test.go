@@ -69,6 +69,89 @@ func TestRenderMarkdownDocumentPreservesInlineSVG(t *testing.T) {
 	}
 }
 
+func TestRenderMarkdownDocumentConvertsImageSyntaxToVideoAndAudio(t *testing.T) {
+	t.Parallel()
+
+	rendered, _, err := RenderMarkdownDocument([]byte(`# Media
+
+![demo video](demo.mp4)
+
+![demo audio](song.mp3)
+
+![still image](photo.png)
+`))
+	if err != nil {
+		t.Fatalf("RenderMarkdownDocument: %v", err)
+	}
+
+	if !strings.Contains(rendered, `<video src="demo.mp4" controls="" preload="metadata">`) {
+		t.Fatalf("expected mp4 image syntax to convert to <video>, got %q", rendered)
+	}
+	if !strings.Contains(rendered, `<audio src="song.mp3" controls="" preload="metadata">`) {
+		t.Fatalf("expected mp3 image syntax to convert to <audio>, got %q", rendered)
+	}
+	if !strings.Contains(rendered, `<img src="photo.png"`) {
+		t.Fatalf("expected png image syntax to remain an <img>, got %q", rendered)
+	}
+}
+
+func TestRenderMarkdownDocumentPreservesInlineVideoAndStripsScripts(t *testing.T) {
+	t.Parallel()
+
+	rendered, _, err := RenderMarkdownDocument([]byte(`# Inline media
+
+<video src="https://example.com/clip.mp4" controls width="320" poster="https://example.com/poster.jpg"></video>
+
+<audio src="https://example.com/song.mp3" controls></audio>
+
+<video src="javascript:alert(1)" controls></video>
+
+<video><source src="bad.mp4" type="video/mp4"><script>alert("xss")</script></video>
+`))
+	if err != nil {
+		t.Fatalf("RenderMarkdownDocument: %v", err)
+	}
+
+	for _, want := range []string{
+		`<video src="https://example.com/clip.mp4"`,
+		`width="320"`,
+		`poster="https://example.com/poster.jpg"`,
+		`<audio src="https://example.com/song.mp3"`,
+		`<source src="bad.mp4" type="video/mp4"`,
+	} {
+		if !strings.Contains(rendered, want) {
+			t.Fatalf("expected %q in rendered output, got %q", want, rendered)
+		}
+	}
+	for _, banned := range []string{`javascript:`, `<script`, `alert("xss")`} {
+		if strings.Contains(rendered, banned) {
+			t.Fatalf("expected %q to be stripped, got %q", banned, rendered)
+		}
+	}
+}
+
+func TestRewriteMarkdownLinksRewritesVideoAndAudioSources(t *testing.T) {
+	t.Parallel()
+
+	rendered := `<p><video src="../media/clip.mp4" controls></video><audio src="../media/song.mp3" controls></audio><video><source src="../media/clip.webm" type="video/webm"></video></p>`
+	got, err := RewriteMarkdownLinks(rendered, "docs/readme.md", func(target string, isImage bool) string {
+		return "/r/share123/" + target + "?t=token123"
+	})
+	if err != nil {
+		t.Fatalf("RewriteMarkdownLinks: %v", err)
+	}
+
+	for _, want := range []string{
+		`/r/share123/media/clip.mp4?t=token123`,
+		`/r/share123/media/song.mp3?t=token123`,
+		`/r/share123/media/clip.webm?t=token123`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("expected rewritten media URL %q, got %q", want, got)
+		}
+	}
+}
+
 func TestRenderMarkdownDocumentPreservesDirectiveTagsAndNestedMarkdown(t *testing.T) {
 	t.Parallel()
 
