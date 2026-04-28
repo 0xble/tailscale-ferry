@@ -13,8 +13,9 @@ import (
 )
 
 type Client struct {
-	baseURL string
-	http    *http.Client
+	baseURL    string
+	http       *http.Client
+	publicHTTP *http.Client
 }
 
 type healthResponse struct {
@@ -25,22 +26,30 @@ type healthResponse struct {
 // NewClient builds an admin client. A path-shaped address (or a "unix:"
 // prefix) dials a Unix domain socket; otherwise the address is used as a TCP
 // host:port. UDS is the production transport, TCP is reserved for tests.
+//
+// The returned client carries a separate http.Client for probing the
+// public-facing health URL. Without that, the UDS transport would also route
+// the public probe to the admin socket because DialContext ignores the
+// requested address.
 func NewClient(adminAddr string) *Client {
 	network, target := parseAdminAddr(strings.TrimSpace(adminAddr))
-
-	httpClient := &http.Client{Timeout: 3 * time.Second}
+	publicHTTP := &http.Client{Timeout: 3 * time.Second}
 
 	if network == "unix" {
 		socketPath := target
-		httpClient.Transport = &http.Transport{
-			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
-				var d net.Dialer
-				return d.DialContext(ctx, "unix", socketPath)
+		adminHTTP := &http.Client{
+			Timeout: 3 * time.Second,
+			Transport: &http.Transport{
+				DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+					var d net.Dialer
+					return d.DialContext(ctx, "unix", socketPath)
+				},
 			},
 		}
 		return &Client{
-			baseURL: "http://ferry-admin",
-			http:    httpClient,
+			baseURL:    "http://ferry-admin",
+			http:       adminHTTP,
+			publicHTTP: publicHTTP,
 		}
 	}
 
@@ -49,8 +58,9 @@ func NewClient(adminAddr string) *Client {
 		base = "http://" + base
 	}
 	return &Client{
-		baseURL: strings.TrimRight(base, "/"),
-		http:    httpClient,
+		baseURL:    strings.TrimRight(base, "/"),
+		http:       &http.Client{Timeout: 3 * time.Second},
+		publicHTTP: publicHTTP,
 	}
 }
 
@@ -78,7 +88,7 @@ func (c *Client) Health() error {
 	}
 
 	publicURL := strings.TrimRight(publicBase, "/") + "/healthz"
-	publicResp, err := c.http.Get(publicURL)
+	publicResp, err := c.publicHTTP.Get(publicURL)
 	if err != nil {
 		return fmt.Errorf("public health request failed: %w", err)
 	}

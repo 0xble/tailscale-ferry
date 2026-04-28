@@ -114,6 +114,45 @@ func TestClientDialsUnixDomainSocket(t *testing.T) {
 	}
 }
 
+// TestUnixClientHealthProbesPublicURLOverTCP guards against a regression
+// where the UDS admin client also routed the public health probe to the
+// admin socket because http.Transport.DialContext ignored the requested
+// address.
+func TestUnixClientHealthProbesPublicURLOverTCP(t *testing.T) {
+	t.Parallel()
+
+	dir := shortSocketDir(t)
+	socketPath := filepath.Join(dir, "admin.sock")
+
+	publicServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/healthz" {
+			http.NotFound(w, r)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer publicServer.Close()
+
+	ln, err := net.Listen("unix", socketPath)
+	if err != nil {
+		t.Fatalf("listen unix: %v", err)
+	}
+	defer func() { _ = ln.Close() }()
+
+	adminMux := http.NewServeMux()
+	adminMux.HandleFunc("/admin/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprintf(w, `{"ok":true,"public_base_url":"%s"}`, publicServer.URL)
+	})
+	go func() { _ = http.Serve(ln, adminMux) }()
+
+	client := NewClient(socketPath)
+	if err := client.Health(); err != nil {
+		t.Fatalf("Health over UDS admin + TCP public: %v", err)
+	}
+}
+
 func TestListenAdminCreatesPrivateSocket(t *testing.T) {
 	t.Parallel()
 
