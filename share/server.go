@@ -16,12 +16,16 @@ import (
 )
 
 const (
-	DefaultAdminAddr     = "127.0.0.1:39125"
 	DefaultPublicPort    = 39124
 	defaultShareTTL      = 7 * 24 * time.Hour
 	defaultGCInterval    = 1 * time.Hour
 	defaultServerTimeout = 10 * time.Second
 )
+
+// adminAddrTCPPrefix forces a TCP listener for tests and explicit overrides.
+// Production callers leave AdminAddr empty so the daemon binds the UDS path
+// from StatePaths.AdminSocket.
+const adminAddrTCPPrefix = "tcp:"
 
 type DaemonConfig struct {
 	Paths       StatePaths
@@ -42,9 +46,6 @@ type Daemon struct {
 }
 
 func NewDaemon(cfg DaemonConfig) (*Daemon, error) {
-	if cfg.AdminAddr == "" {
-		cfg.AdminAddr = DefaultAdminAddr
-	}
 	if cfg.PublicPort == 0 {
 		cfg.PublicPort = DefaultPublicPort
 	}
@@ -57,6 +58,12 @@ func NewDaemon(cfg DaemonConfig) (*Daemon, error) {
 			return nil, err
 		}
 		cfg.Paths = paths
+	}
+	if cfg.AdminAddr == "" {
+		cfg.AdminAddr = cfg.Paths.AdminSocket
+	}
+	if cfg.AdminAddr == "" {
+		return nil, fmt.Errorf("admin address is empty and StatePaths.AdminSocket is unset")
 	}
 	if err := cfg.Paths.Ensure(); err != nil {
 		return nil, err
@@ -119,7 +126,7 @@ func (d *Daemon) Run(ctx context.Context) error {
 	}
 	defer func() { _ = loopbackListener.Close() }()
 
-	adminListener, err := net.Listen("tcp", d.cfg.AdminAddr)
+	adminListener, err := listenAdmin(d.cfg.AdminAddr)
 	if err != nil {
 		return fmt.Errorf("listen admin: %w", err)
 	}
@@ -218,6 +225,47 @@ func noIndex(next http.Handler) http.Handler {
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		next.ServeHTTP(w, r)
 	})
+}
+
+// listenAdmin binds the admin API. A path-shaped address (or a "unix:" prefix)
+// listens on a Unix domain socket with mode 0600 in a 0700 parent. A "tcp:"
+// prefix or a host:port address listens on TCP for tests.
+func listenAdmin(addr string) (net.Listener, error) {
+	network, address := parseAdminAddr(addr)
+	if network == "unix" {
+		if err := os.Remove(address); err != nil && !os.IsNotExist(err) {
+			return nil, fmt.Errorf("remove stale admin socket: %w", err)
+		}
+		if err := ensureDirMode(filepath.Dir(address), privateDirMode); err != nil {
+			return nil, fmt.Errorf("admin socket dir: %w", err)
+		}
+		ln, err := net.Listen("unix", address)
+		if err != nil {
+			return nil, err
+		}
+		if err := os.Chmod(address, privateFileMode); err != nil {
+			_ = ln.Close()
+			_ = os.Remove(address)
+			return nil, fmt.Errorf("chmod admin socket: %w", err)
+		}
+		return ln, nil
+	}
+	return net.Listen(network, address)
+}
+
+// parseAdminAddr decides whether the daemon should listen on a Unix domain
+// socket or a TCP address. The default for production callers is unix.
+func parseAdminAddr(addr string) (string, string) {
+	if strings.HasPrefix(addr, "unix:") {
+		return "unix", strings.TrimPrefix(addr, "unix:")
+	}
+	if strings.HasPrefix(addr, adminAddrTCPPrefix) {
+		return "tcp", strings.TrimPrefix(addr, adminAddrTCPPrefix)
+	}
+	if strings.HasPrefix(addr, "/") {
+		return "unix", addr
+	}
+	return "tcp", addr
 }
 
 func (d *Daemon) adminMux() http.Handler {

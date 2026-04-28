@@ -15,6 +15,7 @@ type StatePaths struct {
 	SecretPath   string
 	SnapshotsDir string
 	LogsDir      string
+	AdminSocket  string
 }
 
 const (
@@ -35,6 +36,7 @@ func DefaultStatePaths() (StatePaths, error) {
 		SecretPath:   filepath.Join(base, "secret"),
 		SnapshotsDir: filepath.Join(base, "snapshots"),
 		LogsDir:      filepath.Join(base, "logs"),
+		AdminSocket:  filepath.Join(base, "admin.sock"),
 	}, nil
 }
 

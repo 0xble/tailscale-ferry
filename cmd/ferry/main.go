@@ -76,7 +76,7 @@ func main() {
 		kong.Vars{"version": version},
 	)
 
-	client := share.NewClient(share.DefaultAdminAddr)
+	client := share.NewClient(resolveAdminAddr())
 
 	var err error
 	switch ctx.Command() {
@@ -105,6 +105,21 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(cli.ExitError)
 	}
+}
+
+// resolveAdminAddr returns the admin socket path for the current user's state
+// directory. Falls back to the legacy TCP loopback address only if the home
+// directory cannot be resolved (extremely unusual, kept to avoid panics in
+// degraded environments).
+func resolveAdminAddr() string {
+	if env := strings.TrimSpace(os.Getenv("FERRY_ADMIN_ADDR")); env != "" {
+		return env
+	}
+	paths, err := share.DefaultStatePaths()
+	if err != nil || paths.AdminSocket == "" {
+		return "tcp:127.0.0.1:39125"
+	}
+	return paths.AdminSocket
 }
 
 func rewriteArgsForPublish(args []string) []string {

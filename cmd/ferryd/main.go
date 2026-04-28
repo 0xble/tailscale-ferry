@@ -27,9 +27,9 @@ type cli struct {
 }
 
 type serveCmd struct {
-	AdminAddr   string `name:"admin-addr" default:"127.0.0.1:39125" help:"Admin API listen address"`
+	AdminAddr   string `name:"admin-addr" help:"Admin API listen address. Defaults to a Unix domain socket in the state dir; prefix tcp: for TCP (tests only)."`
 	PublicPort  int    `name:"public-port" default:"39124" help:"Public file-serving port (tailnet-only bind)"`
-	TokenBytes  int    `name:"token-bytes" default:"8" help:"HMAC token truncation length in bytes (8 = 11 chars, 16 = 22 chars)"`
+	TokenBytes  int    `name:"token-bytes" default:"8" help:"HMAC token truncation length in bytes (minimum 8)"`
 	ExternalURL string `name:"external-url" help:"Override external base URL for generated share links (e.g. https://share.example.com)"`
 	StateDir    string `name:"state-dir" help:"Override state directory"`
 }
@@ -46,6 +46,7 @@ func (c *serveCmd) Run() error {
 			SecretPath:   c.StateDir + "/secret",
 			SnapshotsDir: c.StateDir + "/snapshots",
 			LogsDir:      c.StateDir + "/logs",
+			AdminSocket:  c.StateDir + "/admin.sock",
 		}
 	}
 

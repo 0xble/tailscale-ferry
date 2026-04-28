@@ -2,9 +2,11 @@ package share
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -20,16 +22,35 @@ type healthResponse struct {
 	PublicBaseURL string `json:"public_base_url"`
 }
 
+// NewClient builds an admin client. A path-shaped address (or a "unix:"
+// prefix) dials a Unix domain socket; otherwise the address is used as a TCP
+// host:port. UDS is the production transport, TCP is reserved for tests.
 func NewClient(adminAddr string) *Client {
-	base := strings.TrimSpace(adminAddr)
+	network, target := parseAdminAddr(strings.TrimSpace(adminAddr))
+
+	httpClient := &http.Client{Timeout: 3 * time.Second}
+
+	if network == "unix" {
+		socketPath := target
+		httpClient.Transport = &http.Transport{
+			DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
+				var d net.Dialer
+				return d.DialContext(ctx, "unix", socketPath)
+			},
+		}
+		return &Client{
+			baseURL: "http://ferry-admin",
+			http:    httpClient,
+		}
+	}
+
+	base := target
 	if !strings.HasPrefix(base, "http://") && !strings.HasPrefix(base, "https://") {
 		base = "http://" + base
 	}
 	return &Client{
 		baseURL: strings.TrimRight(base, "/"),
-		http: &http.Client{
-			Timeout: 3 * time.Second,
-		},
+		http:    httpClient,
 	}
 }
 
