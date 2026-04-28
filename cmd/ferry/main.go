@@ -368,6 +368,9 @@ func openOnRemote(url string) error {
 	if host == "" {
 		return nil
 	}
+	if strings.HasPrefix(host, "-") {
+		return cli.ErrWithExit("invalid_args", "--open host must not start with '-' (ssh option injection)", cli.ExitUsage)
+	}
 	cmd := execCommand("ssh", host, "open", url)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

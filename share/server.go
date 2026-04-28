@@ -52,6 +52,9 @@ func NewDaemon(cfg DaemonConfig) (*Daemon, error) {
 	if cfg.TokenBytes == 0 {
 		cfg.TokenBytes = DefaultTokenBytes
 	}
+	if cfg.TokenBytes < MinTokenBytes {
+		return nil, fmt.Errorf("token_bytes=%d is below minimum %d", cfg.TokenBytes, MinTokenBytes)
+	}
 	if cfg.Paths.BaseDir == "" {
 		paths, err := DefaultStatePaths()
 		if err != nil {

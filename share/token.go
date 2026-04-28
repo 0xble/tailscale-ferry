@@ -38,7 +38,14 @@ func GenerateShareID() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }
 
-const DefaultTokenBytes = 8
+const (
+	DefaultTokenBytes = 8
+	// MinTokenBytes is the smallest HMAC truncation accepted by the daemon.
+	// 8 bytes (64 bits) sits well above any practical online brute-force
+	// horizon under the failed-auth rate limiter. A misconfigured smaller
+	// value would silently weaken authentication.
+	MinTokenBytes = 8
+)
 
 func ShareToken(secret []byte, shareID string, tokenBytes int) string {
 	if tokenBytes <= 0 {

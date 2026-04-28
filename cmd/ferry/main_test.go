@@ -43,8 +43,6 @@ func TestFindExistingLiveShareIn(t *testing.T) {
 }
 
 func TestOpenOnRemotePassesURLAsArgument(t *testing.T) {
-	t.Parallel()
-
 	originalOpen := cliFlags.Publish.Open
 	originalExecCommand := execCommand
 	t.Cleanup(func() {
@@ -72,6 +70,30 @@ func TestOpenOnRemotePassesURLAsArgument(t *testing.T) {
 	wantArgs := []string{"laptop", "open", url}
 	if !reflect.DeepEqual(gotArgs, wantArgs) {
 		t.Fatalf("expected args %v, got %v", wantArgs, gotArgs)
+	}
+}
+
+func TestOpenOnRemoteRejectsHostStartingWithDash(t *testing.T) {
+	originalOpen := cliFlags.Publish.Open
+	originalExecCommand := execCommand
+	t.Cleanup(func() {
+		cliFlags.Publish.Open = originalOpen
+		execCommand = originalExecCommand
+	})
+
+	cliFlags.Publish.Open = "-oProxyCommand=evil"
+	called := false
+	execCommand = func(name string, args ...string) *exec.Cmd {
+		called = true
+		return exec.Command("true")
+	}
+
+	err := openOnRemote("https://example.com/share")
+	if err == nil {
+		t.Fatal("expected error rejecting host that starts with '-'")
+	}
+	if called {
+		t.Fatal("ssh should not have been invoked")
 	}
 }
 
