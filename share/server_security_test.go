@@ -28,6 +28,90 @@ func TestPublicMuxSetsSecurityHeaders(t *testing.T) {
 	if got := res.Header().Get("Referrer-Policy"); got != "no-referrer" {
 		t.Fatalf("Referrer-Policy = %q, want %q", got, "no-referrer")
 	}
+	if got := res.Header().Get("X-Content-Type-Options"); got != "nosniff" {
+		t.Fatalf("X-Content-Type-Options = %q, want %q", got, "nosniff")
+	}
+	if got := res.Header().Get("X-Frame-Options"); got != "DENY" {
+		t.Fatalf("X-Frame-Options = %q, want %q", got, "DENY")
+	}
+}
+
+func TestPreviewRouteSetsContentSecurityPolicy(t *testing.T) {
+	t.Parallel()
+
+	d := newTestDaemon(t)
+	share := createTestShare(t, d)
+	handler := d.publicMux()
+
+	req := httptest.NewRequest(http.MethodGet, "/s/"+share.ID+"?t=bad-token", nil)
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+
+	csp := res.Header().Get("Content-Security-Policy")
+	if csp == "" {
+		t.Fatalf("expected Content-Security-Policy on /s/, got empty")
+	}
+	for _, want := range []string{
+		"default-src 'none'",
+		"frame-ancestors 'none'",
+		"base-uri 'none'",
+		"form-action 'none'",
+		"script-src",
+		"https://cdn.jsdelivr.net",
+	} {
+		if !strings.Contains(csp, want) {
+			t.Fatalf("CSP missing %q\ngot: %s", want, csp)
+		}
+	}
+}
+
+func TestRawRouteSetsRestrictiveCSP(t *testing.T) {
+	t.Parallel()
+
+	d := newTestDaemon(t)
+	share := createTestShare(t, d)
+	handler := d.publicMux()
+
+	req := httptest.NewRequest(http.MethodGet, "/r/"+share.ID+"?t=bad-token", nil)
+	res := httptest.NewRecorder()
+	handler.ServeHTTP(res, req)
+
+	csp := res.Header().Get("Content-Security-Policy")
+	if csp == "" {
+		t.Fatalf("expected Content-Security-Policy on /r/, got empty")
+	}
+	for _, want := range []string{"default-src 'none'", "sandbox"} {
+		if !strings.Contains(csp, want) {
+			t.Fatalf("raw CSP missing %q\ngot: %s", want, csp)
+		}
+	}
+}
+
+func TestPreviewPagesIncludeSubresourceIntegrity(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name string
+		kind PreviewKind
+	}{
+		{"diff", PreviewDiff},
+		{"code", PreviewCode},
+		{"csv", PreviewCSV},
+		{"pdf", PreviewPDF},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			body := RenderPreviewPage("sample."+string(tc.kind), tc.kind, "/r/abc?t=tok", nil)
+			if !strings.Contains(body, `integrity="sha384-`) {
+				t.Fatalf("preview kind %s missing SRI integrity attribute", tc.kind)
+			}
+			if !strings.Contains(body, `crossorigin="anonymous"`) {
+				t.Fatalf("preview kind %s missing crossorigin=anonymous", tc.kind)
+			}
+		})
+	}
 }
 
 func TestPublicMuxRateLimitsFailedAuthByIP(t *testing.T) {

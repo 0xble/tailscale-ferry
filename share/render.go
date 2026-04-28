@@ -460,9 +460,9 @@ func RenderPreviewPage(baseName string, kind PreviewKind, rawURL string, breadcr
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
 <title>%s</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" media="screen and (prefers-color-scheme: light)" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" media="screen and (prefers-color-scheme: dark)" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" integrity="sha384-eFTL69TLRZTkNfYZOLM+G04821K1qZao/4QLJbet1pP4tcF+fdXq/9CdqAbWRl/L" crossorigin="anonymous" referrerpolicy="no-referrer" media="screen and (prefers-color-scheme: light)" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" integrity="sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH" crossorigin="anonymous" referrerpolicy="no-referrer" media="screen and (prefers-color-scheme: dark)" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html@3.4.56/bundles/css/diff2html.min.css" integrity="sha384-PdRCG/+r1waybtXfuDB9Kmv2h7AGoN6WaTZ5OF+ctPeR9BGne0FaKRQnUeGV4nDL" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>`+previewThemeCSS+previewBaseCSS+`
 .container{max-width:1400px}
 #diff{padding:16px;overflow-x:auto;overflow-y:hidden}
@@ -527,7 +527,7 @@ func RenderPreviewPage(baseName string, kind PreviewKind, rawURL string, breadcr
 </div>
 <div id="diff" class="message">Loading diff preview...</div>
 </div></div>
-<script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui-slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/diff2html@3.4.56/bundles/js/diff2html-ui-slim.min.js" integrity="sha384-WV/85F8QlW9zrU6tCec7YGnPJWFExGkFiGU9Ir/5QHjLhu1jcvhe8XoVdWsCLZ7b" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 fetch("%s").then(async response=>{
  if (!response.ok) {
@@ -570,9 +570,9 @@ fetch("%s").then(async response=>{
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
 <title>%s</title>
-<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/highlight.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/github.min.css" media="(prefers-color-scheme: light)" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/github-dark.min.css" media="(prefers-color-scheme: dark)" />
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/highlight.min.js" integrity="sha384-RH2xi4eIQ/gjtbs9fUXM68sLSi99C7ZWBRX1vDrVv6GQXRibxXLbwO2NGZB74MbU" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/github.min.css" integrity="sha384-eFTL69TLRZTkNfYZOLM+G04821K1qZao/4QLJbet1pP4tcF+fdXq/9CdqAbWRl/L" crossorigin="anonymous" referrerpolicy="no-referrer" media="(prefers-color-scheme: light)" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/github-dark.min.css" integrity="sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH" crossorigin="anonymous" referrerpolicy="no-referrer" media="(prefers-color-scheme: dark)" />
 <style>`+previewThemeCSS+previewBaseCSS+`
 pre{margin:0;padding:16px;overflow:auto}
 code{font-size:13px;line-height:1.45;font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace}
@@ -601,8 +601,8 @@ fetch("%s").then(r=>r.text()).then(text=>{
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
 <title>%s</title>
-<link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet" media="(prefers-color-scheme: light)">
-<link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/css/tabulator_midnight.min.css" rel="stylesheet" media="(prefers-color-scheme: dark)">
+<link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/css/tabulator.min.css" rel="stylesheet" integrity="sha384-p6hY5g6BjbrEVoCLwj4gZMkotMaHdQrPkd4S0vRpErDxL9/kvjyaUIq/S9RAPQfL" crossorigin="anonymous" referrerpolicy="no-referrer" media="(prefers-color-scheme: light)">
+<link href="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/css/tabulator_midnight.min.css" rel="stylesheet" integrity="sha384-vBqRsRIPXb03PYCog2z5jjcEBrrvg3yilshFbdVOmFtVX27t9rYeO7lXit0xIcou" crossorigin="anonymous" referrerpolicy="no-referrer" media="(prefers-color-scheme: dark)">
 <style>`+previewThemeCSS+previewBaseCSS+`</style>
 </head><body>
 <div class="container" style="max-width:1280px">
@@ -610,8 +610,8 @@ fetch("%s").then(r=>r.text()).then(text=>{
 <div class="box-header">%s%s</div>
 <div id="table" style="padding:4px"></div>
 </div></div>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js" integrity="sha384-Jd2/X5FXVKahwaY2nivvw4LfSTg9idSj8yNXWtT4qef0fHSYr6M7M8bJAfbFYoMc" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/tabulator-tables@6.3.0/dist/js/tabulator.min.js" integrity="sha384-gb+8dgIcSEcX2zwyEPEEKZiwD8km3OTz47IVU3CXdP/pYz4fRAdb9pJdlHW8VvM0" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 fetch("%s").then(r=>r.text()).then(text=>{
  const parsed=Papa.parse(text,{header:true,skipEmptyLines:true})
@@ -628,6 +628,7 @@ fetch("%s").then(r=>r.text()).then(text=>{
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
 <title>%s</title>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs" integrity="sha384-+0ti2moQlmLN7WZHE2RHIf5lV8hHxhxEalN0il3YZceG26fUPyOkR0hp9daxk1i7" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>`+previewThemeCSS+previewBaseCSS+`
 #viewer{padding:16px;display:grid;gap:16px}
 canvas{width:100%%;height:auto;background:#fff;border-radius:4px}
@@ -641,8 +642,8 @@ canvas{width:100%%;height:auto;background:#fff;border-radius:4px}
 <div id="viewer"><p style="padding:16px;color:var(--preview-text-muted)">Loading PDF...</p></div>
 </div></div>
 <script type="module">
-import * as pdfjsLib from "https://esm.sh/pdfjs-dist@4.10.38/build/pdf.min.mjs";
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://esm.sh/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
 const viewer=document.getElementById("viewer");
 try {
  const doc=await pdfjsLib.getDocument("%s").promise;

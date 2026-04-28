@@ -214,15 +214,50 @@ func (d *Daemon) publicMux() http.Handler {
 	mux.HandleFunc("/healthz", d.handlePublicHealth)
 	mux.HandleFunc("/s/", d.handlePreview)
 	mux.HandleFunc("/r/", d.handleRaw)
-	return noIndex(failedAuthRateLimit(d.failedAuth, mux))
+	return securityHeaders(failedAuthRateLimit(d.failedAuth, mux))
 }
 
-// noIndex wraps a handler to set response headers on every public response,
-// preventing indexing and referrer leakage from shared URLs.
-func noIndex(next http.Handler) http.Handler {
+// previewCSP restricts what the rendered preview pages can load.
+// script-src and style-src include 'unsafe-inline' because the preview pages
+// embed inline CSS and short bootstrap scripts; SRI on every external CDN
+// asset is the durable defense against supply-chain compromise. The other
+// directives close clickjacking, base-uri tampering, form-action exfil, and
+// arbitrary worker/connect destinations.
+const previewCSP = "default-src 'none'; " +
+	"script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+	"style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+	"img-src 'self' data: https:; " +
+	"media-src 'self'; " +
+	"font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+	"connect-src 'self'; " +
+	"worker-src 'self' blob: https://cdn.jsdelivr.net; " +
+	"frame-ancestors 'none'; " +
+	"base-uri 'none'; " +
+	"form-action 'none'"
+
+// rawCSP applies to /r/ raw responses. The route already forces
+// Content-Disposition: attachment for HTML and X-Content-Type-Options: nosniff,
+// so this is defense-in-depth: even if a browser ignored the disposition
+// header, the sandbox plus default-src 'none' keeps the document inert.
+const rawCSP = "default-src 'none'; sandbox"
+
+// securityHeaders wraps the public handler with response headers that
+// prevent indexing, referrer leakage, MIME-type sniffing, and frame
+// embedding, and applies a Content-Security-Policy appropriate for each
+// route family.
+func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-Robots-Tag", "noindex, nofollow")
-		w.Header().Set("Referrer-Policy", "no-referrer")
+		h := w.Header()
+		h.Set("X-Robots-Tag", "noindex, nofollow")
+		h.Set("Referrer-Policy", "no-referrer")
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/r/"):
+			h.Set("Content-Security-Policy", rawCSP)
+		case strings.HasPrefix(r.URL.Path, "/s/"):
+			h.Set("Content-Security-Policy", previewCSP)
+		}
 		next.ServeHTTP(w, r)
 	})
 }
