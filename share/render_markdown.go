@@ -72,7 +72,7 @@ func renderMarkdownDocument(source []byte) (string, error) {
 		return "", fmt.Errorf("render markdown: %w", err)
 	}
 
-	sanitized := markdownPolicy().Sanitize(buf.String())
+	sanitized := markdownSanitizer.Sanitize(buf.String())
 	decorated, err := decorateMarkdownHTML(sanitized)
 	if err != nil {
 		return "", fmt.Errorf("decorate markdown: %w", err)
@@ -183,14 +183,8 @@ func RewriteMarkdownLinks(rendered string, currentRel string, resolver markdownL
 		}
 	})
 
-	doc.Find(markdownMediaSrcSelector).Each(func(_ int, sel *goquery.Selection) {
-		src, ok := sel.Attr("src")
-		if !ok {
-			return
-		}
-		if rewritten, ok := rewriteMarkdownTarget(src, currentDir, true, resolver); ok {
-			sel.SetAttr("src", rewritten)
-		}
+	rewriteMediaSources(doc, func(src string) (string, bool) {
+		return rewriteMarkdownTarget(src, currentDir, true, resolver)
 	})
 
 	html, err := doc.Find("#share-markdown-root").Html()
@@ -201,6 +195,18 @@ func RewriteMarkdownLinks(rendered string, currentRel string, resolver markdownL
 }
 
 const markdownMediaSrcSelector = "img[src], video[src], audio[src], source[src], track[src]"
+
+func rewriteMediaSources(doc *goquery.Document, rewriter func(src string) (string, bool)) {
+	doc.Find(markdownMediaSrcSelector).Each(func(_ int, sel *goquery.Selection) {
+		src, ok := sel.Attr("src")
+		if !ok {
+			return
+		}
+		if rewritten, ok := rewriter(src); ok {
+			sel.SetAttr("src", rewritten)
+		}
+	})
+}
 
 func RewriteServePreviewImageSources(rendered string, externalBase string) (string, error) {
 	if rendered == "" {
@@ -214,14 +220,8 @@ func RewriteServePreviewImageSources(rendered string, externalBase string) (stri
 		return "", fmt.Errorf("parse markdown images: %w", err)
 	}
 
-	doc.Find(markdownMediaSrcSelector).Each(func(_ int, sel *goquery.Selection) {
-		src, ok := sel.Attr("src")
-		if !ok {
-			return
-		}
-		if rewritten, ok := rewriteServePreviewImageSource(src, baseURL); ok {
-			sel.SetAttr("src", rewritten)
-		}
+	rewriteMediaSources(doc, func(src string) (string, bool) {
+		return rewriteServePreviewImageSource(src, baseURL)
 	})
 
 	html, err := doc.Find("#share-markdown-root").Html()
@@ -231,7 +231,9 @@ func RewriteServePreviewImageSources(rendered string, externalBase string) (stri
 	return html, nil
 }
 
-func markdownPolicy() *bluemonday.Policy {
+var markdownSanitizer = buildMarkdownSanitizer()
+
+func buildMarkdownSanitizer() *bluemonday.Policy {
 	p := bluemonday.UGCPolicy()
 	p.AllowElements("input")
 	p.AllowAttrs("type").Matching(markdownCheckboxTypePattern).OnElements("input")
@@ -245,11 +247,13 @@ func markdownPolicy() *bluemonday.Policy {
 	return p
 }
 
+var inlineMediaElements = []string{"video", "audio", "source", "track"}
+
 // allowInlineMedia extends p with the safe subset of HTML media elements so
 // hand-authored <video>/<audio> blocks survive sanitization. URL schemes for
 // src/poster are still constrained by UGCPolicy's AllowStandardURLs.
 func allowInlineMedia(p *bluemonday.Policy) {
-	p.AllowElements("video", "audio", "source", "track")
+	p.AllowElements(inlineMediaElements...)
 
 	p.AllowAttrs(
 		"src", "controls", "preload", "muted", "loop",
@@ -320,9 +324,9 @@ func decorateMarkdownHTML(rendered string) (string, error) {
 		}
 		switch mediaKindForSrc(src) {
 		case PreviewVideo:
-			sel.ReplaceWithHtml(buildMediaElementHTML("video", src))
+			retagImgAsMediaElement(sel, "video")
 		case PreviewAudio:
-			sel.ReplaceWithHtml(buildMediaElementHTML("audio", src))
+			retagImgAsMediaElement(sel, "audio")
 		}
 	})
 
@@ -344,21 +348,22 @@ func decorateMarkdownHTML(rendered string) (string, error) {
 }
 
 func mediaKindForSrc(src string) PreviewKind {
-	s := strings.TrimSpace(src)
-	if s == "" {
-		return PreviewBinary
+	u, err := url.Parse(strings.TrimSpace(src))
+	if err != nil || u.Path == "" {
+		return ""
 	}
-	if u, err := url.Parse(s); err == nil && u.Path != "" {
-		return ClassifyPreviewKind(path.Base(u.Path))
-	}
-	return ClassifyPreviewKind(path.Base(s))
+	return ClassifyPreviewKind(path.Base(u.Path))
 }
 
-func buildMediaElementHTML(tag string, src string) string {
-	return fmt.Sprintf(
-		`<%s src="%s" controls preload="metadata"></%s>`,
-		tag, html.EscapeString(src), tag,
-	)
+func retagImgAsMediaElement(sel *goquery.Selection, tag string) {
+	node := sel.Get(0)
+	if node == nil {
+		return
+	}
+	node.Data = tag
+	sel.RemoveAttr("alt")
+	sel.SetAttr("controls", "")
+	sel.SetAttr("preload", "metadata")
 }
 
 func decorateMarkdownCopyBlock(sel *goquery.Selection, kind string, label string) {
