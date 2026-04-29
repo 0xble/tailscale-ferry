@@ -274,6 +274,72 @@ func TestRenderMarkdownDocumentDecoratesSupportedCopyBlocks(t *testing.T) {
 	}
 }
 
+func TestRenderMarkdownDocumentDecoratesGitHubAlerts(t *testing.T) {
+	t.Parallel()
+
+	rendered, _, err := RenderMarkdownDocument([]byte(`> [!NOTE]
+> Useful information.
+
+> [!TIP]
+> Helpful advice.
+
+> [!IMPORTANT]
+> Key information.
+
+> [!WARNING]
+> Urgent info.
+
+> [!CAUTION]
+> Risky outcome.
+`))
+	if err != nil {
+		t.Fatalf("RenderMarkdownDocument: %v", err)
+	}
+
+	for _, alert := range []struct {
+		kind  string
+		title string
+	}{
+		{kind: "note", title: "Note"},
+		{kind: "tip", title: "Tip"},
+		{kind: "important", title: "Important"},
+		{kind: "warning", title: "Warning"},
+		{kind: "caution", title: "Caution"},
+	} {
+		if !strings.Contains(rendered, `blockquote class="markdown-alert markdown-alert-`+alert.kind+` copyable-block copyable-block-quote"`) {
+			t.Fatalf("expected %s alert classes, got %q", alert.kind, rendered)
+		}
+		if !strings.Contains(rendered, `<p class="markdown-alert-title">`+alert.title+`</p>`) {
+			t.Fatalf("expected %s alert title, got %q", alert.kind, rendered)
+		}
+	}
+	if strings.Contains(rendered, "[!NOTE]") || strings.Contains(rendered, "[!WARNING]") {
+		t.Fatalf("expected alert markers to be stripped, got %q", rendered)
+	}
+	if !strings.Contains(rendered, `<p>Urgent info.</p>`) {
+		t.Fatalf("expected alert body to remain visible, got %q", rendered)
+	}
+}
+
+func TestRenderMarkdownDocumentKeepsRegularBlockquoteWithAlertText(t *testing.T) {
+	t.Parallel()
+
+	rendered, _, err := RenderMarkdownDocument([]byte(`> Quoted first.
+>
+> [!WARNING]
+`))
+	if err != nil {
+		t.Fatalf("RenderMarkdownDocument: %v", err)
+	}
+
+	if strings.Contains(rendered, "markdown-alert") {
+		t.Fatalf("expected non-leading alert marker to remain a normal quote, got %q", rendered)
+	}
+	if !strings.Contains(rendered, "[!WARNING]") {
+		t.Fatalf("expected non-leading marker to remain visible, got %q", rendered)
+	}
+}
+
 func TestRenderMarkdownDocumentOmitsCopyDecorationForTables(t *testing.T) {
 	t.Parallel()
 

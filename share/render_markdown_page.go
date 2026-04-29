@@ -593,6 +593,50 @@ a:hover { text-decoration: underline; }
   border-left: 0.25em solid var(--preview-border-muted);
 }
 
+.markdown-body .markdown-alert {
+  --markdown-alert-color: var(--preview-border-muted);
+  padding: 0.75rem 3rem 0.75rem 1rem;
+  color: var(--preview-text);
+  border-left-color: var(--markdown-alert-color);
+  background: color-mix(in srgb, var(--markdown-alert-color) 8%, transparent);
+}
+
+.markdown-body .markdown-alert-note { --markdown-alert-color: #0969da; }
+.markdown-body .markdown-alert-tip { --markdown-alert-color: #1a7f37; }
+.markdown-body .markdown-alert-important { --markdown-alert-color: #8250df; }
+.markdown-body .markdown-alert-warning { --markdown-alert-color: #9a6700; }
+.markdown-body .markdown-alert-caution { --markdown-alert-color: #cf222e; }
+
+.markdown-body .markdown-alert-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.45rem;
+  color: var(--markdown-alert-color);
+  font-weight: 600;
+}
+
+.markdown-body .markdown-alert-title::before {
+  content: "!";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .markdown-body .markdown-alert-note { --markdown-alert-color: #2f81f7; }
+  .markdown-body .markdown-alert-tip { --markdown-alert-color: #3fb950; }
+  .markdown-body .markdown-alert-important { --markdown-alert-color: #a371f7; }
+  .markdown-body .markdown-alert-warning { --markdown-alert-color: #d29922; }
+  .markdown-body .markdown-alert-caution { --markdown-alert-color: #f85149; }
+}
+
 .markdown-body hr {
   height: 0.25rem;
   padding: 0;

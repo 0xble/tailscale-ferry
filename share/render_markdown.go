@@ -15,6 +15,7 @@ import (
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	goldmarkhtml "github.com/yuin/goldmark/renderer/html"
+	nethtml "golang.org/x/net/html"
 	"gopkg.in/yaml.v3"
 )
 
@@ -30,6 +31,7 @@ var (
 	markdownCheckboxTypePattern = regexp.MustCompile(`(?i)^checkbox$`)
 	markdownFrontmatterFence    = []byte("---")
 	markdownDirectiveTagPattern = regexp.MustCompile(`^</?([a-z][a-z0-9_:-]*)(?:\s+[^<>]*)?>$`)
+	markdownAlertMarkerPattern  = regexp.MustCompile(`(?i)^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*(?:\r?\n)?[ \t]*`)
 )
 
 var markdownDirectiveTags = map[string]struct{}{
@@ -334,6 +336,7 @@ func decorateMarkdownHTML(rendered string) (string, error) {
 		decorateMarkdownCopyBlock(sel, "code", "Copy code block")
 	})
 	doc.Find("blockquote").Each(func(_ int, sel *goquery.Selection) {
+		decorateMarkdownAlert(sel)
 		decorateMarkdownCopyBlock(sel, "quote", "Copy quote")
 	})
 	doc.Find("details").Each(func(_ int, sel *goquery.Selection) {
@@ -345,6 +348,68 @@ func decorateMarkdownHTML(rendered string) (string, error) {
 		return "", err
 	}
 	return html, nil
+}
+
+func decorateMarkdownAlert(sel *goquery.Selection) {
+	if sel == nil {
+		return
+	}
+	firstParagraph := sel.ChildrenFiltered("p").First()
+	kind, ok := removeMarkdownAlertMarker(firstParagraph)
+	if !ok {
+		return
+	}
+
+	addMarkdownHTMLClass(sel, "markdown-alert")
+	addMarkdownHTMLClass(sel, "markdown-alert-"+kind)
+	title := `<p class="markdown-alert-title">` + html.EscapeString(markdownAlertTitle(kind)) + `</p>`
+	sel.PrependHtml(title)
+
+	if strings.TrimSpace(firstParagraph.Text()) == "" && firstParagraph.Children().Length() == 0 {
+		firstParagraph.Remove()
+	}
+}
+
+func removeMarkdownAlertMarker(sel *goquery.Selection) (string, bool) {
+	if sel == nil || sel.Length() == 0 {
+		return "", false
+	}
+	for _, node := range sel.Contents().Nodes {
+		if node.Type != nethtml.TextNode {
+			if strings.TrimSpace(node.Data) == "" {
+				continue
+			}
+			return "", false
+		}
+		match := markdownAlertMarkerPattern.FindStringSubmatchIndex(node.Data)
+		if match == nil {
+			if strings.TrimSpace(node.Data) == "" {
+				continue
+			}
+			return "", false
+		}
+		kind := strings.ToLower(node.Data[match[2]:match[3]])
+		node.Data = node.Data[match[1]:]
+		return kind, true
+	}
+	return "", false
+}
+
+func markdownAlertTitle(kind string) string {
+	switch kind {
+	case "note":
+		return "Note"
+	case "tip":
+		return "Tip"
+	case "important":
+		return "Important"
+	case "warning":
+		return "Warning"
+	case "caution":
+		return "Caution"
+	default:
+		return kind
+	}
 }
 
 func mediaKindForSrc(src string) PreviewKind {
