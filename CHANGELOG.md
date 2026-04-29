@@ -10,6 +10,14 @@ Generated release notes for tagged versions are also published on the
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-04-29
+
+### Added
+
+- Markdown previews now render GitHub-style alerts for `[!NOTE]`, `[!TIP]`,
+  `[!IMPORTANT]`, `[!WARNING]`, and `[!CAUTION]` blockquotes instead of showing
+  the alert marker as plain quote text.
+
 ## [2.0.0] - 2026-04-28
 
 This release moves the admin API off TCP and adds defense-in-depth on the
@@ -116,7 +124,8 @@ Initial public release.
 - Admin API listens on loopback only (`127.0.0.1:39125`); public listener binds
   to the tailnet interface.
 
-[Unreleased]: https://github.com/0xble/tailscale-ferry/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/0xble/tailscale-ferry/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/0xble/tailscale-ferry/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/0xble/tailscale-ferry/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/0xble/tailscale-ferry/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/0xble/tailscale-ferry/compare/v1.0.0...v1.1.0
