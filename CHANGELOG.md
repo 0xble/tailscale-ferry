@@ -10,6 +10,55 @@ Generated release notes for tagged versions are also published on the
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-04-28
+
+This release moves the admin API off TCP and adds defense-in-depth on the
+preview pages. Anyone hitting the loopback admin port directly will need to
+switch to the CLI or the new Unix domain socket.
+
+### Changed
+
+- **BREAKING:** The admin API now listens on a Unix domain socket at
+  `~/.local/state/ferry/admin.sock` (mode `0600` in a `0700` parent) instead
+  of `127.0.0.1:39125`. The CLI auto-resolves the socket path; set
+  `FERRY_ADMIN_ADDR` or pass `--admin-addr tcp:127.0.0.1:39125` to opt back
+  into TCP. The `share.DefaultAdminAddr` Go constant has been removed; use
+  `share.DefaultStatePaths().AdminSocket` instead.
+- `pdfjs-dist` is now loaded from `cdn.jsdelivr.net` instead of `esm.sh` so
+  Subresource Integrity hashes apply to the actual served bytes.
+- `diff2html` is now pinned to `3.4.56` (previously floated to npm latest).
+
+### Added
+
+- Subresource Integrity (`integrity="sha384-..."`, `crossorigin="anonymous"`,
+  `referrerpolicy="no-referrer"`) on every CDN `<script>` and `<link>` in
+  preview pages. A pinned `<link rel="modulepreload">` covers the PDF.js
+  module so the browser validates SRI before the inline `import` runs.
+- `Content-Security-Policy` on `/s/` preview responses with `default-src
+  'none'`, `frame-ancestors 'none'`, `base-uri 'none'`, `form-action 'none'`,
+  and script/style/font/worker sources restricted to the known CDN hosts.
+- `Content-Security-Policy: default-src 'none'; sandbox` on `/r/` raw
+  responses as defense-in-depth on top of the existing
+  `Content-Disposition: attachment` for HTML.
+- `X-Content-Type-Options: nosniff` and `X-Frame-Options: DENY` on every
+  public response.
+
+### Security
+
+- Admin API is no longer reachable from any browser tab on the host; the
+  kernel's socket file mode is the auth, which closes CSRF and DNS-rebinding
+  attacks against the admin endpoints.
+- `ferryd serve --token-bytes` now rejects values below `8` instead of
+  silently accepting them, so a misconfiguration surfaces as a startup error
+  rather than weakening authentication.
+- `ferry publish --open <host>` rejects host arguments that begin with `-`
+  to block ssh option injection (e.g. `-oProxyCommand=...`).
+
+### Fixed
+
+- `Client.Health()` no longer routes the public-health probe through the
+  admin transport when the admin client is dialing a Unix domain socket.
+
 ## [1.2.0] - 2026-04-28
 
 ### Added
@@ -67,7 +116,8 @@ Initial public release.
 - Admin API listens on loopback only (`127.0.0.1:39125`); public listener binds
   to the tailnet interface.
 
-[Unreleased]: https://github.com/0xble/tailscale-ferry/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/0xble/tailscale-ferry/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/0xble/tailscale-ferry/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/0xble/tailscale-ferry/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/0xble/tailscale-ferry/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/0xble/tailscale-ferry/releases/tag/v1.0.0
