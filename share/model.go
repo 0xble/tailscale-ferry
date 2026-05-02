@@ -1,6 +1,9 @@
 package share
 
-import "time"
+import (
+	"path/filepath"
+	"time"
+)
 
 const (
 	ModeLive     = "live"
@@ -48,7 +51,12 @@ type ShareResponse struct {
 }
 
 func (s Share) ToResponse(baseURL string, token string) ShareResponse {
-	preview := baseURL + "/s/" + s.ID + "?t=" + token
+	query := "t=" + token
+	if !s.IsDir && ClassifyPreviewKind(filepath.Base(s.SourcePath)) == PreviewPDF {
+		query += "&pv=native"
+	}
+
+	preview := baseURL + "/s/" + s.ID + "?" + query
 	if s.IsDir {
 		preview = baseURL + "/s/" + s.ID + "/?t=" + token
 	}
