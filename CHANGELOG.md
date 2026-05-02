@@ -10,6 +10,14 @@ Generated release notes for tagged versions are also published on the
 
 ## [Unreleased]
 
+### Fixed
+
+- PDF preview links now use the browser's native PDF viewer instead of the
+  Ferry PDF.js canvas renderer, avoiding incorrect image rendering on PDFs with
+  embedded color profiles.
+- Public share responses now send no-cache headers, and directory PDF links use
+  a fresh native-viewer cache key so stale preview HTML is not reused.
+
 ## [2.1.0] - 2026-04-29
 
 ### Added

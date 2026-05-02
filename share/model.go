@@ -1,6 +1,7 @@
 package share
 
 import (
+	"net/url"
 	"path/filepath"
 	"time"
 )
@@ -51,14 +52,10 @@ type ShareResponse struct {
 }
 
 func (s Share) ToResponse(baseURL string, token string) ShareResponse {
-	query := "t=" + token
-	if !s.IsDir && ClassifyPreviewKind(filepath.Base(s.SourcePath)) == PreviewPDF {
-		query += "&pv=native"
-	}
-
+	query := previewQuery(token, !s.IsDir && ClassifyPreviewKind(filepath.Base(s.SourcePath)) == PreviewPDF)
 	preview := baseURL + "/s/" + s.ID + "?" + query
 	if s.IsDir {
-		preview = baseURL + "/s/" + s.ID + "/?t=" + token
+		preview = baseURL + "/s/" + s.ID + "/?" + previewQuery(token, false)
 	}
 
 	return ShareResponse{
@@ -71,4 +68,12 @@ func (s Share) ToResponse(baseURL string, token string) ShareResponse {
 		ExpiresAt: s.ExpiresAt,
 		Revoked:   s.RevokedAt != nil,
 	}
+}
+
+func previewQuery(token string, isPDF bool) string {
+	query := "t=" + url.QueryEscape(token)
+	if isPDF {
+		query += "&pv=native"
+	}
+	return query
 }

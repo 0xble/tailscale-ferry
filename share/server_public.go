@@ -269,10 +269,7 @@ func (d *Daemon) renderMarkdownPreview(share Share, targetPath string, rel strin
 func (d *Daemon) buildPreviewPath(shareID string, rel string, token string) string {
 	escapedRel := escapeRel(rel)
 	baseURL := strings.TrimRight(d.ExternalBaseURL(), "/")
-	query := "t=" + url.QueryEscape(token)
-	if rel != "" && ClassifyPreviewKind(path.Base(rel)) == PreviewPDF {
-		query += "&pv=native"
-	}
+	query := previewQuery(token, rel != "" && ClassifyPreviewKind(path.Base(rel)) == PreviewPDF)
 	if escapedRel == "" {
 		path := fmt.Sprintf("/s/%s/?%s", shareID, query)
 		if baseURL == "" {
