@@ -34,6 +34,9 @@ func TestPublicMuxSetsSecurityHeaders(t *testing.T) {
 	if got := res.Header().Get("X-Frame-Options"); got != "DENY" {
 		t.Fatalf("X-Frame-Options = %q, want %q", got, "DENY")
 	}
+	if got := res.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("Cache-Control = %q, want %q", got, "no-store")
+	}
 }
 
 func TestPreviewRouteSetsContentSecurityPolicy(t *testing.T) {

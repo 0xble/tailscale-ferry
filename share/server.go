@@ -255,6 +255,8 @@ func securityHeaders(next http.Handler) http.Handler {
 		h.Set("Referrer-Policy", "no-referrer")
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("X-Frame-Options", "DENY")
+		h.Set("Cache-Control", "no-store")
+		h.Set("Pragma", "no-cache")
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/r/"):
 			h.Set("Content-Security-Policy", rawCSP)

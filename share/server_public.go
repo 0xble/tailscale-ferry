@@ -79,6 +79,11 @@ func (d *Daemon) handlePreview(w http.ResponseWriter, r *http.Request) {
 		_ = d.store.TouchLastServed(share.ID, time.Now().UTC())
 		return
 	}
+	if kind == PreviewPDF {
+		http.Redirect(w, r, d.buildRawPath(share.ID, rel, token), http.StatusFound)
+		_ = d.store.TouchLastServed(share.ID, time.Now().UTC())
+		return
+	}
 
 	rawURL := d.buildRawPath(share.ID, rel, token)
 	html := RenderPreviewPage(baseName, kind, rawURL, breadcrumbs)
