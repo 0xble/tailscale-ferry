@@ -1,0 +1,9 @@
+{
+  "schema": "local-ci/v1",
+  "gate": "./bin/check",
+  "profiles": {
+    "full": "./bin/check"
+  },
+  "merge_requires": "full",
+  "release_and_deploy_are_separate": true
+}
