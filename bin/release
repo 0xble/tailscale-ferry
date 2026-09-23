@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Explicit maintainer operation. Builds a draft release; never promotes runtime.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+if [[ $# != 2 || "$1" != --draft || ! "$2" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+  echo 'Usage: bin/release --draft vX.Y.Z (requires GoReleaser v2 and gh)' >&2
+  exit 2
+fi
+tag=$2
+[[ -z "$(git status --porcelain)" ]] || { echo 'Release requires a clean checkout' >&2; exit 1; }
+head=$(git rev-parse HEAD)
+[[ "$(git rev-parse "$tag^{commit}")" == "$head" ]] || { echo 'Tag must select this checkout HEAD' >&2; exit 1; }
+[[ "$(git remote get-url origin)" == git@github.com:0xble/tailscale-ferry.git || "$(git remote get-url origin)" == https://github.com/0xble/tailscale-ferry.git ]] || { echo 'Release origin must be 0xble/tailscale-ferry' >&2; exit 1; }
+remote=$(gh api "repos/0xble/tailscale-ferry/commits/$tag" --jq .sha)
+[[ "$remote" == "$head" ]] || { echo 'Remote tag differs from candidate' >&2; exit 1; }
+./bin/ci
+[[ "$(git rev-parse HEAD)" == "$head" && -z "$(git status --porcelain)" ]] || { echo 'Candidate changed during verification' >&2; exit 1; }
+goreleaser --version | grep -Eq '(GitVersion: +|version +)(v)?2\.' || { echo 'GoReleaser v2 required' >&2; exit 1; }
+exec goreleaser release --clean --draft

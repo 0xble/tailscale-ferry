@@ -15,4 +15,5 @@ install:
 	go install ./cmd/ferryd
 
 clean:
-	rm -rf bin/ dist/
+	rm -f bin/ferry bin/ferryd
+	rm -rf dist/

@@ -5,3 +5,11 @@ dist/
 *.db-shm
 *.db-wal
 .worktrees/
+
+.ci/
+__pycache__/
+
+# Repository entrypoints remain visible even with a global bin/ ignore.
+!/bin/
+!/bin/ci
+!/bin/release

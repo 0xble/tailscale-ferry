@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Preview geometry regression. Requires: pip install playwright; playwright install chromium webkit."""
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -55,8 +56,8 @@ visualViewport.dispatchEvent(new Event("resize"));''')
 Object.defineProperty(visualViewport,"width",{configurable:true,get:()=>1024});
 visualViewport.dispatchEvent(new Event("resize"));''')
             expect_width(1024)
-            if engine == "webkit" and width == 1024:
-                page.screenshot(path="/tmp/ferry-responsive-landscape.png")
+            if engine == "webkit" and width == 1024 and os.environ.get("FERRY_SCREENSHOT"):
+                page.screenshot(path=os.environ["FERRY_SCREENSHOT"])
             page.close()
             count += 1
         browser.close()

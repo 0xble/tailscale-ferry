@@ -1,5 +1,9 @@
 version: 2
 
+# Both binaries use pure-Go SQLite. Avoid requiring cross C compilers.
+env:
+  - CGO_ENABLED=0
+
 builds:
   - id: ferry
     main: ./cmd/ferry

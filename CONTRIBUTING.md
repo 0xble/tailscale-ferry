@@ -1,48 +1,76 @@
 # Contributing
 
-Thanks for your interest in ferry.
-
 ## Development
 
-Requirements:
-
-- Go (see `go.mod` for the minimum version)
-- [Tailscale](https://tailscale.com) running locally for end-to-end testing
-
-Common tasks:
+Install Go 1.27.1, Python 3.9 or newer, Git, make and a C compiler. macOS and Linux are
+supported. Tailscale, a personal account, Docker and maintainer tools are not
+required for contributor checks.
 
 ```sh
-bin/check       # canonical repo gate (vet + test + build)
-bin/doctor      # machine and runtime diagnostics (never run from hooks)
-
-make build      # build ferry + ferryd into ./bin
-make test       # go test ./...
-make lint       # go vet ./...
-make install    # go install both binaries
+./bin/ci           # download modules, then vet, test, build, race and harness checks
+./bin/ci setup     # prepare checkout-local Go modules separately
+./bin/ci check     # run checks with prepared modules
+./bin/check        # compatible spelling for the complete gate
+make build        # build bin/ferry and bin/ferryd
+bin/doctor        # optional diagnostics for an actual installed ferry service
 ```
 
-On first clone, wire the committed git hooks:
+Run the entrypoint in the requested checkout or use its absolute path. Linked
+worktrees have separate `.ci` module/build caches and private invocation homes.
+CI ignores personal Go, Git and Tailscale configuration. A checkout lock rejects
+simultaneous checks in the same worktree. Different worktrees can run concurrently.
+Cancellation terminates command process groups. Source or index changes fail the
+gate and remain available for inspection. CI does not install Git hooks.
+
+The optional formatting hook can be installed for this worktree after checking
+for an existing hook configuration:
 
 ```sh
-git config --local core.hooksPath git-hooks
+git config --show-origin --get core.hooksPath
+git config extensions.worktreeConfig true
+git config --worktree core.hooksPath git-hooks
 ```
 
-## Pull requests
+Preserve existing hooks rather than overwriting their configuration. There is no
+full pre-push gate. Run the complete gate before requesting review.
 
-- Keep changes focused and atomic
-- Add tests for new behavior
-- Run `make test` and `make lint` before submitting
-- Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages (`feat:`, `fix:`, `refactor:`, etc.)
+## Browser regression lane
 
-## Reporting bugs
+The separate browser lane checks the actual preview layout in Chromium and
+WebKit across fourteen browser/size combinations. It uses synthetic routed HTML,
+without a running ferry or Tailscale account. It remains explicit rather than
+being silently claimed by the default Go gate.
 
-Open an issue at https://github.com/0xble/tailscale-ferry/issues with:
+```sh
+./bin/ci setup
+./bin/ci browser-setup  # private Python environment and pinned Playwright browsers
+./bin/ci browser
+```
 
-- What you expected vs what happened
-- Steps to reproduce
-- OS, Go version, and Tailscale version
-- Relevant log output from `~/.local/state/ferry/logs/ferryd.log`
+Linux hosts additionally need Playwright's system browser libraries. Browser
+installation is an explicit preparation step and never runs from `check`.
+Screenshots are not written to shared `/tmp` paths.
 
-## Security issues
+## Pull requests and releases
 
-See [SECURITY.md](SECURITY.md).
+Use focused changes and Conventional Commit messages. All required checks run
+locally. An independently installed operator can execute `bin/ci` in its sandbox
+and publish the exact PR commit's `local-ci/full` result. GitHub's normal merge
+path enforces that result. Contributors do not need the operator or its credentials.
+There is no GitHub Actions workflow or custom merge command.
+
+Maintainers retain `.goreleaser.yaml` as the release packaging contract: both
+binaries, Darwin/Linux on arm64/amd64, tar archives, checksums and draft releases.
+Release binaries use pure-Go SQLite with CGO disabled for portable cross-builds.
+The native race gate still enables CGO.
+To prepare a release without publishing, run the gate and then
+`goreleaser release --snapshot --clean --skip=publish` using GoReleaser v2.
+For an explicitly authorized draft release, create and push the intended version
+tag separately, then run `bin/release --draft vX.Y.Z` with existing `gh` and
+GoReleaser authentication. The command checks clean source, local/remote tag
+identity and runs the full gate before packaging. It creates only a draft under
+the existing GoReleaser configuration. Publishing that draft is a separate
+maintainer decision. CI migration does not publish a release or activate ferryd.
+
+Report bugs at https://github.com/0xble/tailscale-ferry/issues with reproducible
+steps and relevant diagnostics. See [SECURITY.md](SECURITY.md) for security issues.
