@@ -12,7 +12,7 @@
 
 ## Verification
 
-- [ ] `bin/check` passes locally
+- [ ] `./bin/ci gate "$(git rev-parse HEAD)"` passes locally on a clean commit
 - [ ] Tests added or updated for the change
 - [ ] No new `go vet` warnings
 

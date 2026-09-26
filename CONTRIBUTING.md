@@ -12,7 +12,9 @@ Requirements:
 Common tasks:
 
 ```sh
-bin/check       # canonical repo gate (vet + test + build)
+./bin/ci preflight                        # fast local feedback: whitespace, gofmt, vet, build
+./bin/ci gate "$(git rev-parse HEAD)"     # merge gate on a clean exact commit: gofmt, vet, tests, build, race
+./bin/ci nightly "$(git rev-parse HEAD)"  # gate plus uncached shuffled race tests and release cross-builds
 bin/doctor      # machine and runtime diagnostics (never run from hooks)
 
 make build      # build ferry + ferryd into ./bin
@@ -27,11 +29,17 @@ On first clone, wire the committed git hooks:
 git config --local core.hooksPath git-hooks
 ```
 
+First inspect `git config --show-scope --get-all core.hooksPath`. If another hook manager is already configured, have it dispatch `git-hooks/pre-push` rather than overwriting it. The pre-push hook runs `./bin/ci preflight` and is bypassable feedback only.
+
+## CI
+
+Pull requests run `./bin/ci gate` on GitHub at the exact head commit. The `qualification` check is the only merge requirement. `./bin/ci nightly` runs on main every day at 06:41 UTC and can be dispatched manually. Releases stay tag-driven through `.github/workflows/release.yml`.
+
 ## Pull requests
 
 - Keep changes focused and atomic
 - Add tests for new behavior
-- Run `make test` and `make lint` before submitting
+- Run `./bin/ci gate "$(git rev-parse HEAD)"` on a clean commit before submitting
 - Use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages (`feat:`, `fix:`, `refactor:`, etc.)
 
 ## Reporting bugs
